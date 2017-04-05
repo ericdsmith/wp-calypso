@@ -28,7 +28,12 @@ import {
 import middleware, {
 	connectChat,
 	requestTranscript,
+	sendRouteSetEventMessage,
 } from '../middleware';
+import {
+	HAPPYCHAT_CHAT_STATUS_ASSIGNED,
+	HAPPYCHAT_CHAT_STATUS_PENDING,
+} from '../selectors';
 
 describe( 'middleware', () => {
 	describe( 'HAPPYCHAT_CONNECT action', () => {
@@ -179,6 +184,52 @@ describe( 'middleware', () => {
 						...response,
 					} );
 				} );
+		} );
+	} );
+
+	describe( 'ROUTE_SET action', () => {
+		let connection;
+		const action = { path: '/me' };
+		const state = {
+			currentUser: {
+				id: '2'
+			},
+			users: {
+				items: {
+					2: { username: 'Link' }
+				}
+			},
+			happychat: {
+				connectionStatus: 'connected',
+				isAvailable: true,
+				chatStatus: HAPPYCHAT_CHAT_STATUS_ASSIGNED
+			}
+		};
+		beforeEach( () => {
+			connection = { sendEvent: stub() };
+		} );
+		it( 'should sent the page URL the user is in', () => {
+			const getState = () => state;
+			sendRouteSetEventMessage( connection, { getState }, action );
+			expect( connection.sendEvent ).to.have.been.calledWith(
+				'Looking at https://wordpress.com/me?support_user=Link'
+			);
+		} );
+		it( 'should not sent the page URL the user is in when client not connected', () => {
+			const getState = () => Object.assign( {},
+				state,
+				{ happychat: { connectionStatus: 'uninitialized' } }
+			);
+			sendRouteSetEventMessage( connection, { getState }, action );
+			expect( connection.sendEvent ).to.not.have.been.called;
+		} );
+		it( 'should not sent the page URL the user is in when chat is not assigned', () => {
+			const getState = () => Object.assign( {},
+				state,
+				{ happychat: { chatStatus: HAPPYCHAT_CHAT_STATUS_PENDING } }
+			);
+			sendRouteSetEventMessage( connection, { getState }, action );
+			expect( connection.sendEvent ).to.not.have.been.called;
 		} );
 	} );
 } );

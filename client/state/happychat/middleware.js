@@ -14,6 +14,7 @@ import {
 	HAPPYCHAT_SEND_MESSAGE,
 	HAPPYCHAT_SET_MESSAGE,
 	HAPPYCHAT_TRANSCRIPT_REQUEST,
+	ROUTE_SET,
 } from 'state/action-types';
 import {
 	receiveChatEvent,
@@ -29,6 +30,8 @@ import {
 import {
 	getHappychatConnectionStatus,
 	getHappychatTranscriptTimestamp,
+	isHappychatClientConnected,
+	isHappychatChatAssigned
 } from './selectors';
 import {
 	getCurrentUser,
@@ -135,6 +138,15 @@ const sendBrowserInfo = ( connection, siteUrl ) => {
 	connection.info( msg );
 };
 
+export const sendRouteSetEventMessage = ( connection, { getState }, action ) =>{
+	const state = getState();
+	const currentUser = getCurrentUser( state );
+	if ( isHappychatClientConnected( state ) &&
+		isHappychatChatAssigned( state ) ) {
+		connection.sendEvent( `Looking at https://wordpress.com${ action.path }?support_user=${ currentUser.username }` );
+	}
+};
+
 export default function( connection = null ) {
 	// Allow a connection object to be specified for
 	// testing. If blank, use a real connection.
@@ -162,6 +174,9 @@ export default function( connection = null ) {
 
 			case HAPPYCHAT_TRANSCRIPT_REQUEST:
 				requestTranscript( connection, store );
+				break;
+			case ROUTE_SET:
+				sendRouteSetEventMessage( connection, store, action );
 				break;
 		}
 		return next( action );
