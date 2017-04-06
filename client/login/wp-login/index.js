@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 /**
  * Internal dependencies
  */
+import config from 'config';
 import {
 	showRequestForm as showMagicLoginRequestForm,
 } from 'state/login/magic-login/actions';
@@ -49,6 +50,14 @@ class Login extends React.Component {
 		}
 	}
 
+	goBack( event ) {
+		event.preventDefault();
+
+		if ( typeof window !== 'undefined' ) {
+			window.history.back();
+		}
+	}
+
 	footerContent() {
 		const {
 			handlingMagicLink,
@@ -70,10 +79,10 @@ class Login extends React.Component {
 			<div>
 				{ loginLink }
 
-				<div>{ this.props.translate( 'Lost your password' ) }</div>
+				<div><a href={ config( 'login_url' ) + '?action=lostpassword' }>{ this.props.translate( 'Lost your password' ) }</a></div>
 
 				<div>
-					<Gridicon icon="arrow-left" size={ 18 } /> { this.props.translate( 'Back' ) }
+					<a href="#" onClick={ this.goBack }><Gridicon icon="arrow-left" size={ 18 } /> { this.props.translate( 'Back' ) }</a>
 				</div>
 			</div>
 		);
