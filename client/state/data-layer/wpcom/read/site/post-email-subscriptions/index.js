@@ -21,6 +21,7 @@ function requestPostEmailSubscription( { dispatch }, action, next ) {
 	dispatch( http( {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/post_email_subscriptions/new`,
+		body: {}, // have to have an empty body to make wpcom-http happy
 		apiVersion: '1.2',
 		onSuccess: action,
 		onFailure: action,
@@ -67,6 +68,7 @@ function requestPostEmailUnsubscription( { dispatch }, action, next ) {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/post_email_subscriptions/delete`,
 		apiVersion: '1.2',
+		body: {},
 		onSuccess: action,
 		onFailure: action,
 	} ) );
