@@ -3,7 +3,6 @@
  */
 import React from 'react';
 import { connect } from 'react-redux';
-import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -18,7 +17,7 @@ import {
 	isShowingCheckYourEmailPage,
 } from 'state/login/magic-login/selectors';
 import { getCurrentQueryArguments } from 'state/ui/selectors';
-
+import Gridicon from 'gridicons';
 import Main from 'components/main';
 import LoginBlock from 'blocks/login';
 import RequestLoginEmailForm from '../magic-login/request-login-email-form';
@@ -57,14 +56,27 @@ class Login extends React.Component {
 			showingMagicLoginRequestForm,
 			translate,
 		} = this.props;
+		let loginLink;
 
 		if ( ! (
 			handlingMagicLink ||
 			showingCheckYourEmailPage ||
 			showingMagicLoginRequestForm
 		) ) {
-			return <a href="#" onClick={ this.props.onMagicLoginRequestClick }>{ translate( 'Email me a login link' ) }</a>;
+			loginLink = <div><a href="#" onClick={ this.props.onMagicLoginRequestClick }>{ translate( 'Email me a login link' ) }</a></div>;
 		}
+
+		return (
+			<div>
+				{ loginLink }
+
+				<div>{ this.props.translate( 'Lost your password' ) }</div>
+
+				<div>
+					<Gridicon icon="arrow-left" size={ 18 } /> { this.props.translate( 'Back' ) }
+				</div>
+			</div>
+		);
 	}
 
 	render() {
@@ -77,17 +89,10 @@ class Login extends React.Component {
 			<Main className="wp-login">
 				{ this.magicLoginMainContent() || (
 					<div>
-						<div className="wp-login__header">
-							<Gridicon icon="user-circle" size={ 72 } />
-							<div>{
-								// @TODO show currently logged in user if any
-								translate( 'You are signed out' )
-							}</div>
-						</div>
 						<div className="wp-login__container">
 							{ showingMagicLoginRequestForm
 								? <RequestLoginEmailForm />
-								: <LoginBlock title={ translate( 'Sign in to WordPress.com' ) } />
+								: <LoginBlock title={ translate( 'Log in to your account' ) } />
 							}
 						</div>
 						<div className="wp-login__footer">
