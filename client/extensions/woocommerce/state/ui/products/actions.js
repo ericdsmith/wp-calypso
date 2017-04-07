@@ -3,35 +3,19 @@
  */
 import {
 	WOOCOMMERCE_EDIT_PRODUCT,
-	WOOCOMMERCE_EDIT_VARIATION_TYPE,
-	WOOCOMMERCE_EDIT_VARIATION,
 } from '../../action-types';
 
-export function editProduct( productId, data ) {
+export function editProduct( product, data ) {
 	return {
 		type: WOOCOMMERCE_EDIT_PRODUCT,
-		payload: { productId, data },
+		payload: { product, data },
 	};
 }
 
-export function editNewProduct( newProductIndex, data ) {
+export function editNewProduct( newProductIndex, product, data ) {
 	return {
 		type: WOOCOMMERCE_EDIT_PRODUCT,
-		payload: { newProductIndex, data },
-	};
-}
-
-export function editVariationType( productId, variationTypeIndex, data ) {
-	return {
-		type: WOOCOMMERCE_EDIT_VARIATION_TYPE,
-		payload: { productId, variationTypeIndex, data },
-	};
-}
-
-export function editNewProductVariationType( newProductIndex, variationTypeIndex, data ) {
-	return {
-		type: WOOCOMMERCE_EDIT_VARIATION_TYPE,
-		payload: { newProductIndex, variationTypeIndex, data },
+		payload: { newProductIndex, product, data },
 	};
 }
 
