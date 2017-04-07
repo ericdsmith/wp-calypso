@@ -10,44 +10,56 @@ import { connect } from 'react-redux';
 import Card from 'components/card';
 import DefaultPostFormat from './default-post-format';
 import AfterTheDeadline from './after-the-deadline';
+import DateTimeFormat from '../date-time-format';
 import { isJetpackSite, siteSupportsJetpackSettingsUi } from 'state/sites/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 
 const Composing = ( {
 	fields,
 	handleToggle,
+	handleSelect,
 	onChangeField,
 	setFieldValue,
 	eventTracker,
 	isRequestingSettings,
 	isSavingSettings,
 	jetpackSettingsUISupported,
-	siteIsJetpack
+	siteIsJetpack,
+	updateFields,
 } ) => {
 	return (
-		<Card className="site-settings">
-			<DefaultPostFormat
-				onChangeField={ onChangeField }
-				eventTracker={ eventTracker }
+		<div>
+			<Card className="composing__site-settings site-settings">
+				<DefaultPostFormat
+					onChangeField={ onChangeField }
+					eventTracker={ eventTracker }
+					isSavingSettings={ isSavingSettings }
+					isRequestingSettings={ isRequestingSettings }
+					fields={ fields }
+				/>
+				{
+					siteIsJetpack && jetpackSettingsUISupported && (
+						<div>
+							<hr />
+							<AfterTheDeadline
+								handleToggle={ handleToggle }
+								setFieldValue={ setFieldValue }
+								isSavingSettings={ isSavingSettings }
+								isRequestingSettings={ isRequestingSettings }
+								fields={ fields }
+							/>
+						</div>
+					)
+				}
+			</Card>
+			<DateTimeFormat
+				handleSelect={ handleSelect }
 				isSavingSettings={ isSavingSettings }
 				isRequestingSettings={ isRequestingSettings }
 				fields={ fields }
+				updateFields={ updateFields }
 			/>
-			{
-				siteIsJetpack && jetpackSettingsUISupported && (
-					<div>
-						<hr />
-						<AfterTheDeadline
-							handleToggle={ handleToggle }
-							setFieldValue={ setFieldValue }
-							isSavingSettings={ isSavingSettings }
-							isRequestingSettings={ isRequestingSettings }
-							fields={ fields }
-						/>
-					</div>
-				)
-			}
-		</Card>
+		</div>
 	);
 };
 
