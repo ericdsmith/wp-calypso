@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import React from 'react';
+import React, { PropTypes } from 'react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import i18n, { localize } from 'i18n-calypso';
 import debugFactory from 'debug';
@@ -9,6 +9,7 @@ import emailValidator from 'email-validator';
 import {
 	debounce,
 	flowRight as compose,
+	invoke,
 	map,
 	size,
 } from 'lodash';
@@ -67,10 +68,16 @@ const Account = React.createClass( {
 		eventRecorder
 	],
 
+	propTypes: {
+		userSettings: PropTypes.object.isRequired,
+		username: PropTypes.object.isRequired,
+		showNoticeInitially: PropTypes.bool,
+	},
+
 	componentWillMount() {
 		// Clear any username changes that were previously made
-		this.props.username.clearValidation();
-		this.props.userSettings.removeUnsavedSetting( 'user_login' );
+		invoke( this.props, 'username.clearValidation' );
+		invoke( this.props, 'userSettings.removeUnsavedSetting', 'user_login' );
 	},
 
 	componentDidMount() {
@@ -83,11 +90,11 @@ const Account = React.createClass( {
 	},
 
 	getUserSetting( settingName ) {
-		return this.props.userSettings.getSetting( settingName );
+		return invoke( this.props, 'userSettings.getSetting', settingName );
 	},
 
 	updateUserSetting( settingName, value ) {
-		this.props.userSettings.updateSetting( settingName, value );
+		invoke( this.props, 'userSettings.updateSetting', settingName, value );
 	},
 
 	updateUserSettingInput( event ) {
@@ -100,7 +107,7 @@ const Account = React.createClass( {
 
 	updateLanguage( event ) {
 		const { value } = event.target;
-		const originalLanguage = this.props.userSettings.getOriginalSetting( 'language' );
+		const originalLanguage = invoke( this.props, 'userSettings.getOriginalSetting', 'language' );
 
 		this.updateUserSetting( 'language', value );
 		if ( value !== originalLanguage ) {
@@ -135,7 +142,7 @@ const Account = React.createClass( {
 	validateUsername() {
 		const username = this.getUserSetting( 'user_login' );
 		debug( 'Validating username ' + username );
-		this.props.username.validate( username );
+		invoke( this.props, 'username.validate', username );
 	},
 
 	hasEmailValidationError() {
@@ -206,8 +213,8 @@ const Account = React.createClass( {
 	},
 
 	cancelEmailChange() {
-		const { translate, userSettings } = this.props;
-		userSettings.cancelPendingEmailChange( ( error, response ) => {
+		const { translate } = this.props;
+		invoke( this.props, 'userSettings.cancelPendingEmailChange', ( error, response ) => {
 			if ( error ) {
 				debug( 'Error canceling email change: ' + JSON.stringify( error ) );
 				this.props.errorNotice( translate( 'There was a problem canceling the email change. Please, try again.' ) );
@@ -241,10 +248,10 @@ const Account = React.createClass( {
 			usernameAction: null
 		} );
 
-		this.props.username.clearValidation();
-		this.props.userSettings.removeUnsavedSetting( 'user_login' );
+		invoke( this.props, 'username.clearValidation' );
+		invoke( this.props, 'userSettings.removeUnsavedSetting', 'user_login' );
 
-		if ( ! this.props.userSettings.hasUnsavedSettings() ) {
+		if ( ! invoke( this.props, 'userSettings.hasUnsavedSettings' ) ) {
 			this.props.markSaved();
 		}
 	},
@@ -254,10 +261,10 @@ const Account = React.createClass( {
 		const action = null === this.state.usernameAction ? 'none' : this.state.usernameAction;
 
 		this.setState( { submittingForm: true } );
-		this.props.username.change( username, action, ( error ) => {
+		invoke( this.props, 'username.change', username, action, ( error ) => {
 			this.setState( { submittingForm: false } );
 			if ( error ) {
-				this.props.errorNotice( this.props.username.getValidationFailureMessage() );
+				this.props.errorNotice( invoke( this.props, 'username.getValidationFailureMessage' ) );
 			} else {
 				this.props.markSaved();
 
@@ -331,7 +338,7 @@ const Account = React.createClass( {
 	},
 
 	hasPendingEmailChange() {
-		return this.props.userSettings.isPendingEmailChange();
+		return invoke( this.props, 'userSettings.isPendingEmailChange' );
 	},
 
 	renderPendingEmailChange() {
@@ -360,44 +367,44 @@ const Account = React.createClass( {
 	},
 
 	renderUsernameValidation() {
-		const { translate, username, userSettings } = this.props;
+		const { translate } = this.props;
 
-		if ( ! userSettings.isSettingUnsaved( 'user_login' ) ) {
+		if ( ! invoke( this.props, 'userSettings.isSettingUnsaved', 'user_login' ) ) {
 			return null;
 		}
 
-		if ( username.isUsernameValid() ) {
+		if ( invoke( this.props, 'username.isUsernameValid' ) ) {
 			return (
 				<Notice
 					showDismiss={ false }
 					status="is-success"
 					text={ translate( '%(username)s is a valid username.', {
 						args: {
-							username: username.getValidatedUsername()
+							username: invoke( this.props, 'username.getValidatedUsername' )
 						}
 					} ) }
 				/>
 			);
-		} else if ( null !== username.getValidationFailureMessage() ) {
+		} else if ( null !== invoke( this.props, 'username.getValidationFailureMessage' ) ) {
 			return (
 				<Notice
 					showDismiss={ false }
 					status="is-error"
-					text={ username.getValidationFailureMessage() }
+					text={ invoke( this.props, 'username.getValidationFailureMessage' ) }
 				/>
 			);
 		}
 	},
 
 	renderUsernameConfirmNotice() {
-		const { translate, username } = this.props;
+		const { translate } = this.props;
 		const usernameMatch = this.getUserSetting( 'user_login' ) === this.state.userLoginConfirm;
 		const status = usernameMatch ? 'is-success' : 'is-error';
 		const text = usernameMatch
 			? translate( 'Thanks for confirming your new username!' )
 			: translate( 'Please re-enter your new username to confirm it.' );
 
-		if ( ! username.isUsernameValid() ) {
+		if ( ! invoke( this.props, 'username.isUsernameValid' ) ) {
 			return null;
 		}
 
@@ -438,9 +445,9 @@ const Account = React.createClass( {
 	},
 
 	renderEmailValidation() {
-		const { translate, userSettings } = this.props;
+		const { translate } = this.props;
 
-		if ( ! userSettings.isSettingUnsaved( 'user_email' ) ) {
+		if ( ! invoke( this.props, 'userSettings.isSettingUnsaved', 'user_email' ) ) {
 			return null;
 		}
 
@@ -468,7 +475,10 @@ const Account = React.createClass( {
 	 * These form fields are displayed when there is not a username change in progress.
 	 */
 	renderAccountFields() {
-		const { translate, userSettings } = this.props;
+		const { translate } = this.props;
+
+		const isSubmitButtonDisabled = ! invoke( this.props, 'userSettings.hasUnsavedSettings' ) ||
+			this.getDisabledState() || this.hasEmailValidationError();
 
 		return (
 			<div className="account__settings-form" key="settingsForm">
@@ -531,7 +541,7 @@ const Account = React.createClass( {
 
 				<FormButton
 					isSubmitting={ this.state.submittingForm }
-					disabled={ ! userSettings.hasUnsavedSettings() || this.getDisabledState() || this.hasEmailValidationError() }
+					disabled={ isSubmitButtonDisabled }
 					onClick={ this.recordClickEvent( 'Save Account Settings Button' ) }
 				>
 					{ this.state.submittingForm ? translate( 'Saving…' ) : translate( 'Save Account Settings' ) }
@@ -541,8 +551,8 @@ const Account = React.createClass( {
 	},
 
 	renderBlogActionFields() {
-		const { translate, username } = this.props;
-		const actions = username.getAllowedActions();
+		const { translate } = this.props;
+		const actions = invoke( this.props, 'username.getAllowedActions' );
 
 		/*
 		 * If there are no actions or if there is only one action,
@@ -578,7 +588,10 @@ const Account = React.createClass( {
 	 * These form fields are displayed when a username change is in progress.
 	 */
 	renderUsernameFields() {
-		const { translate, username } = this.props;
+		const { translate } = this.props;
+
+		const isSaveButtonDisabled = ( this.getUserSetting( 'user_login' ) !== this.state.userLoginConfirm ) ||
+			! invoke( this.props, 'username.isUsernameValid' ) || this.state.submittingForm;
 
 		return (
 			<div className="account__username-form" key="usernameForm">
@@ -640,8 +653,7 @@ const Account = React.createClass( {
 
 				<FormButtonsBar>
 					<FormButton
-						disabled={ ( this.getUserSetting( 'user_login' ) !== this.state.userLoginConfirm ) ||
-							! username.isUsernameValid() || this.state.submittingForm }
+						disabled={ isSaveButtonDisabled }
 						type="button"
 						onClick={ this.recordClickEvent( 'Change Username Button', this.submitUsernameForm ) }
 					>
@@ -661,9 +673,9 @@ const Account = React.createClass( {
 	},
 
 	render() {
-		const { markChanged, translate, userSettings } = this.props;
+		const { markChanged, translate } = this.props;
 		// Is a username change in progress?
-		const renderUsernameForm = userSettings.isSettingUnsaved( 'user_login' );
+		const renderUsernameForm = invoke( this.props, 'userSettings.isSettingUnsaved', 'user_login' );
 
 		return (
 			<Main className="account">
