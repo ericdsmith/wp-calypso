@@ -281,6 +281,16 @@ form.sidebar__button {
 			}
 		}
 
+		form.sidebar__button {
+			background-color: lighten( $sidebar-bg-color, 10% );
+			color: $sidebar-text-color;
+
+			&:hover {
+				border-color: darken( $sidebar-bg-color, 10% );
+				color: $blue-medium;
+			}
+		}
+
 		.gridicon {
 			fill: $blue-medium;
 		}
@@ -305,13 +315,23 @@ form.sidebar__button {
 			}
 		}
 
+		form.sidebar__button {
+			background-color: $white;
+			border-color: darken( $sidebar-bg-color, 10% );
+			color: $gray-dark;
+
+			&:hover {
+				color: $blue-medium;
+			}
+		}
+
 		.gridicon {
 			fill: $blue-medium;
 		}
 	}
 }
 
-.notouch .sidebar__menu li:not(.selected) a, form {
+.notouch .sidebar__menu li:not(.selected) a {
 	&.sidebar__button:hover {
 		color: $blue-medium;
 	}
