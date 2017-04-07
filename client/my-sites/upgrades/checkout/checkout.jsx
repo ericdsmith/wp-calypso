@@ -40,6 +40,8 @@ import { recordApplePayStatus } from 'lib/apple-pay';
 import { requestSite } from 'state/sites/actions';
 import { isDomainOnlySite } from 'state/selectors';
 import { getCurrentUserLocale } from 'state/current-user/selectors';
+import { getGeoCountry } from 'state/geo/selectors';
+import QueryGeo from 'components/data/query-geo';
 import {
 	getSelectedSite,
 	getSelectedSiteId,
@@ -346,6 +348,7 @@ const Checkout = React.createClass( {
 				cards={ this.props.cards }
 				products={ this.props.productsList.get() }
 				selectedSite={ selectedSite }
+				userCountryCode={ this.props.userCountryCode }
 				userLocale={ this.props.userLocale }
 				redirectTo={ this.getCheckoutCompleteRedirectPath }
 				handleCheckoutCompleteRedirect={ this.handleCheckoutCompleteRedirect }
@@ -378,6 +381,7 @@ const Checkout = React.createClass( {
 			<div className="main main-column" role="main">
 				<div className="checkout">
 					<QueryStoredCards />
+					<QueryGeo />
 
 					{ this.content() }
 				</div>
@@ -396,6 +400,7 @@ module.exports = connect(
 			selectedSite: getSelectedSite( state ),
 			selectedSiteId,
 			selectedSiteSlug: getSelectedSiteSlug( state ),
+			userCountryCode: getGeoCountry( state, 'short' ),
 			userLocale: getCurrentUserLocale( state ),
 		};
 	},
