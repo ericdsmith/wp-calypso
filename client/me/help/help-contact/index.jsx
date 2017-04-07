@@ -58,12 +58,6 @@ const SUPPORT_FORUM = 'SUPPORT_FORUM';
 
 const HelpContact = React.createClass( {
 
-	componentWillReceiveProps( nextProps ) {
-		if ( nextProps.olarkTimedOut && this.olarkTimedOut !== nextProps.olarkTimedOut && ! this.shouldUseHappychat() ) {
-			this.onOlarkUnavailable();
-		}
-	},
-
 	componentDidMount: function() {
 		this.prepareDirectlyWidget();
 
@@ -358,11 +352,6 @@ const HelpContact = React.createClass( {
 		this.autofillSubject();
 	},
 
-	onOlarkUnavailable() {
-		this.trackContactFormAndFillSubject();
-		this.showTimeoutNotice();
-	},
-
 	onOperatorsAway: function() {
 		const IS_UNAVAILABLE = false;
 		this.trackContactFormAndFillSubject();
@@ -387,18 +376,6 @@ const HelpContact = React.createClass( {
 		} else {
 			notices.warning( this.props.translate( 'Sorry! We just missed you as our Happiness Engineers stepped away.' ) );
 		}
-	},
-
-	showTimeoutNotice() {
-		const { isUserEligible, isOlarkReady } = this.state.olark;
-
-		if ( ! isUserEligible || isOlarkReady ) {
-			return;
-		}
-		notices.warning( this.props.translate(
-			'Our chat tools did not load. If you have an adblocker ' +
-			'please disable it and refresh this page.'
-		) );
 	},
 
 	/**
