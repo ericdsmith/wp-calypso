@@ -15,7 +15,7 @@ import { dispatchRequest } from 'state/data-layer/wpcom-http/utils';
 import { subscribeToNewCommentEmail, unsubscribeToNewCommentEmail } from 'state/reader/follows/actions';
 import { errorNotice } from 'state/notices/actions';
 
-function requestCommentEmailSubscription( { dispatch }, action, next ) {
+export function requestCommentEmailSubscription( { dispatch }, action, next ) {
 	dispatch( http( {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/comment_email_subscriptions/new`,
@@ -27,7 +27,7 @@ function requestCommentEmailSubscription( { dispatch }, action, next ) {
 	next( action );
 }
 
-function receiveCommentEmailSubscription( store, action, next, response ) {
+export function receiveCommentEmailSubscription( store, action, next, response ) {
 	// validate that it worked
 	const subscribed = !! ( response && response.subscribed );
 	if ( ! subscribed ) {
@@ -37,13 +37,13 @@ function receiveCommentEmailSubscription( store, action, next, response ) {
 	}
 }
 
-function receiveCommentEmailSubscriptionError( { dispatch }, action, next ) {
+export function receiveCommentEmailSubscriptionError( { dispatch }, action, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem subscribing. Please try again.' ) ) );
 	// dispatch an unsubscribe
 	next( unsubscribeToNewCommentEmail( action.payload.blogId ) );
 }
 
-function requestCommentEmailUnsubscription( { dispatch }, action, next ) {
+export function requestCommentEmailUnsubscription( { dispatch }, action, next ) {
 	dispatch( http( {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/comment_email_subscriptions/delete`,
@@ -55,7 +55,7 @@ function requestCommentEmailUnsubscription( { dispatch }, action, next ) {
 	next( action );
 }
 
-function receiveCommentEmailUnsubscription( store, action, next, response ) {
+export function receiveCommentEmailUnsubscription( store, action, next, response ) {
 	// validate that it worked
 	// if it did, just swallow this response, as we don't need to pass it along.
 	const subscribed = !! ( response && response.subscribed );
@@ -66,7 +66,7 @@ function receiveCommentEmailUnsubscription( store, action, next, response ) {
 	}
 }
 
-function receiveCommentEmailUnsubscriptionError( { dispatch }, action, next ) {
+export function receiveCommentEmailUnsubscriptionError( { dispatch }, action, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem unsubscribing. Please try again.' ) ) );
 	next( subscribeToNewCommentEmail( action.payload.blogId ) );
 }
