@@ -2,19 +2,26 @@
  * External dependencies
  */
 import { isNumber } from 'lodash';
+import debugFactory from 'debug';
 
 /**
  * Internal dependencies
  */
 import {
 	WOOCOMMERCE_EDIT_PRODUCT,
+	WOOCOMMERCE_EDIT_PRODUCT_VARIATION_TYPE,
+	WOOCOMMERCE_EDIT_PRODUCT_VARIATION,
 } from '../../action-types';
+
+const debug = debugFactory( 'woocommerce:state:ui:products' );
 
 const initialState = null;
 
 export default function( state = initialState, action ) {
 	const handlers = {
 		[ WOOCOMMERCE_EDIT_PRODUCT ]: editProductAction,
+		[ WOOCOMMERCE_EDIT_PRODUCT_VARIATION_TYPE ]: editProductVariationTypeAction,
+		[ WOOCOMMERCE_EDIT_PRODUCT_VARIATION ]: editProductVariationAction,
 	};
 
 	const handler = handlers[ action.type ];
@@ -26,6 +33,20 @@ function editProductAction( edits, action ) {
 	const { product, newProductIndex, data } = action.payload;
 
 	return editProduct( edits, product, newProductIndex, data );
+}
+
+function editProductVariationTypeAction( edits, action ) {
+	const { newProductIndex, product, attributeIndex, data } = action.payload;
+	const attributes = product && product.attributes;
+
+	const _attributes = editProductVariationType( attributes, attributeIndex, data );
+
+	return editProduct( edits, product, newProductIndex, { attributes: _attributes } );
+}
+
+function editProductVariationAction( state, action ) {
+	// TODO: Remove this temporary code.
+	console.log( 'editVariation' );
 }
 
 function editProduct( edits, product, newProductIndex, data ) {
@@ -72,5 +93,21 @@ function editNewProduct( creates, newProductIndex, data ) {
 	_creates[ index ] = { ...prevCreate, ...data };
 
 	return _creates;
+}
+
+function editProductVariationType( attributes, attributeIndex, data ) {
+	const prevAttributes = attributes || [];
+	const index = ( isNumber( attributeIndex ) ? attributeIndex : prevAttributes.length );
+
+	const _attributes = [ ...prevAttributes ];
+	const prevAttribute = prevAttributes[ index ] || { variation: true, options: [] };
+
+	if ( prevAttribute.variation ) {
+		_attributes[ index ] = { ...prevAttribute, ...data };
+	} else {
+		debug( 'WARNING: Attempting to edit a non-variation attribute as a variation type.' );
+	}
+
+	return _attributes;
 }
 
