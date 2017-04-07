@@ -1,7 +1,7 @@
 /**
  * External Dependencies
  */
-import { omit } from 'lodash';
+import { get, includes, merge } from 'lodash';
 import { translate } from 'i18n-calypso';
 
 /**
@@ -14,14 +14,31 @@ import {
 } from 'state/action-types';
 import { http } from 'state/data-layer/wpcom-http/actions';
 import { dispatchRequest } from 'state/data-layer/wpcom-http/utils';
-import { subscribeToNewPostEmail, unsubscribeToNewPostEmail } from 'state/reader/follows/actions';
+import { subscribeToNewPostEmail, unsubscribeToNewPostEmail, updateNewPostEmailSubscription } from 'state/reader/follows/actions';
 import { errorNotice } from 'state/notices/actions';
+import { getReaderFollowForBlog } from 'state/selectors';
+
+function validateParameters( params ) {
+	// the only valid param is delivery_frequency
+	const frequency = params.deliveryFrequency;
+	const validFrequencies = [
+		'instantly',
+		'daily',
+		'weekly',
+	];
+	if ( includes( validFrequencies, frequency ) ) {
+		return {
+			delivery_frequency: frequency
+		};
+	}
+	return {};
+}
 
 function requestPostEmailSubscription( { dispatch }, action, next ) {
 	dispatch( http( {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/post_email_subscriptions/new`,
-		body: {}, // have to have an empty body to make wpcom-http happy
+		body: validateParameters( action.payload ), // have to have an empty body to make wpcom-http happy
 		apiVersion: '1.2',
 		onSuccess: action,
 		onFailure: action,
@@ -31,36 +48,65 @@ function requestPostEmailSubscription( { dispatch }, action, next ) {
 
 function receivePostEmailSubscription( store, action, next, response ) {
 	// validate that it worked
-	// if it did, just swallow this response, as we don't need to pass it along.
-	console.log( response );
+	const subscribed = !! ( response && response.subscribed );
+	if ( ! subscribed ) {
+		// shoot. something went wrong.
+		next( unsubscribeToNewPostEmail( action.payload.blogId ) );
+		return;
+	}
+	// pass this on, but tack in the delivery_frequency that we got back from the API
+	next(
+		merge( {}, action, {
+			payload: {
+				delivery_frequency: get( response, [ 'subscription', 'delivery_frequency' ] )
+			}
+		} )
+	);
 }
 
-function receivePostEmailSubscriptionError( { dispatch }, action, next, error ) {
+function receivePostEmailSubscriptionError( { dispatch }, action, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem subscribing. Please try again.' ) ) );
 	// dispatch an unsubscribe
 	next( unsubscribeToNewPostEmail( action.payload.blogId ) );
-	console.log( error );
 }
 
-function updatePostEmailSubscription( { dispatch }, action, next ) {
+function updatePostEmailSubscription( { dispatch, getState }, action, next ) {
+	const actionWithRevert = merge( {}, action, {
+		meta: {
+			previousState: get(
+				getReaderFollowForBlog( getState(), action.payload.blogId ),
+				[ 'delivery_frequency', 'email', 'post_delivery_frequency' ]
+			)
+		}
+	} );
 	dispatch( http( {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/post_email_subscriptions/update`,
 		apiVersion: '1.2',
-		body: omit( action.payload, 'blogId' ),
-		onSuccess: action,
-		onFailure: action,
+		body: validateParameters( action.payload ),
+		onSuccess: actionWithRevert,
+		onFailure: actionWithRevert,
 	} ) );
 	next( action );
 }
 
-function receiveUpdatePostEmailSubscription( { dispatch }, action, next, response ) {
-	console.log( response );
+function receiveUpdatePostEmailSubscription( { dispatch }, { payload: { blogId }, meta: { previousState } }, next, response ) {
+	if ( ! response && response.success ) {
+		// revert
+		next(
+			updateNewPostEmailSubscription(
+				blogId,
+				previousState
+			)
+		);
+	}
 }
 
-function receiveUpdatePostEmailSubscriptionError( { dispatch }, action, next, error ) {
+function receiveUpdatePostEmailSubscriptionError( { dispatch }, { payload: { blogId }, meta: { previousState } }, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem updating that subscription. Please try again.' ) ) );
-	console.log( error );
+	next(
+		updateNewPostEmailSubscription( blogId, previousState )
+	);
 }
 
 function requestPostEmailUnsubscription( { dispatch }, action, next ) {
@@ -68,7 +114,7 @@ function requestPostEmailUnsubscription( { dispatch }, action, next ) {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/post_email_subscriptions/delete`,
 		apiVersion: '1.2',
-		body: {},
+		body: {}, // have to have the empty body for now to make the middleware happy
 		onSuccess: action,
 		onFailure: action,
 	} ) );
@@ -78,13 +124,17 @@ function requestPostEmailUnsubscription( { dispatch }, action, next ) {
 function receivePostEmailUnsubscription( store, action, next, response ) {
 	// validate that it worked
 	// if it did, just swallow this response, as we don't need to pass it along.
-	console.log( response );
+	const subscribed = !! ( response && response.subscribed );
+	if ( subscribed ) {
+		// shoot. something went wrong.
+		next( subscribeToNewPostEmail( action.payload.blogId ) );
+		return;
+	}
 }
 
-function receivePostEmailUnsubscriptionError( { dispatch }, action, next, error ) {
+function receivePostEmailUnsubscriptionError( { dispatch }, action, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem unsubscribing. Please try again.' ) ) );
 	next( subscribeToNewPostEmail( action.payload.blogId ) );
-	console.log( error );
 }
 
 export default {

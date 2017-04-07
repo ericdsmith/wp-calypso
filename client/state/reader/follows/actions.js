@@ -97,10 +97,13 @@ export function unsubscribeToNewPostEmail( blogId ) {
 	};
 }
 
-export function updateNewPostEmailSubscription( blogId, options ) {
+export function updateNewPostEmailSubscription( blogId, deliveryFrequency ) {
 	return {
 		type: READER_UPDATE_NEW_POST_EMAIL_SUBSCRIPTION,
-		payload: options
+		payload: {
+			blogId,
+			deliveryFrequency
+		}
 	};
 }
 
