@@ -42,7 +42,7 @@ const webpackConfig = {
 		noParse: /[\/\\]node_modules[\/\\]localforage[\/\\]dist[\/\\]localforage\.js$/,
 		loaders: [
 			{
-				test: /extensions\/index/,
+				test: /extensions[\/\\]index/,
 				exclude: 'node_modules',
 				loader: path.join( __dirname, 'server', 'bundler', 'extensions-loader' )
 			},
@@ -64,7 +64,7 @@ const webpackConfig = {
 				loader: 'exports?window.tinymce',
 			},
 			{
-				include: /node_modules\/tinymce/,
+				include: /node_modules[\/\\]tinymce/,
 				loader: 'imports?this=>window',
 			}
 		]
