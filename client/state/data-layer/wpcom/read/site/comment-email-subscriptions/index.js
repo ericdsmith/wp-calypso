@@ -1,9 +1,6 @@
 /**
- *
- *//**
  * External Dependencies
  */
-import { omit } from 'lodash';
 import { translate } from 'i18n-calypso';
 
 /**
@@ -11,17 +8,18 @@ import { translate } from 'i18n-calypso';
  */
 import {
 	READER_SUBSCRIBE_TO_NEW_COMMENT_EMAIL,
-	READER_UNSUBSCRIBE_TO_NEW_COMMENT_EMAIL
+	READER_UNSUBSCRIBE_TO_NEW_COMMENT_EMAIL,
 } from 'state/action-types';
 import { http } from 'state/data-layer/wpcom-http/actions';
 import { dispatchRequest } from 'state/data-layer/wpcom-http/utils';
-import { subscribeToNewCommentEmails, unsubscribeToNewCommentEmails } from 'state/reader/follows/actions';
+import { subscribeToNewCommentEmail, unsubscribeToNewCommentEmail } from 'state/reader/follows/actions';
 import { errorNotice } from 'state/notices/actions';
 
 function requestCommentEmailSubscription( { dispatch }, action, next ) {
 	dispatch( http( {
 		method: 'POST',
 		path: `/read/site/${ action.payload.blogId }/comment_email_subscriptions/new`,
+		body: {}, // have to have an empty body to make wpcom-http happy
 		apiVersion: '1.2',
 		onSuccess: action,
 		onFailure: action,
@@ -31,22 +29,26 @@ function requestCommentEmailSubscription( { dispatch }, action, next ) {
 
 function receiveCommentEmailSubscription( store, action, next, response ) {
 	// validate that it worked
-	// if it did, just swallow this response, as we don't need to pass it along.
-	console.log( response );
+	const subscribed = !! ( response && response.subscribed );
+	if ( ! subscribed ) {
+		// shoot. something went wrong.
+		next( unsubscribeToNewCommentEmail( action.payload.blogId ) );
+		return;
+	}
 }
 
-function receiveCommentEmailSubscriptionError( { dispatch }, action, next, error ) {
+function receiveCommentEmailSubscriptionError( { dispatch }, action, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem subscribing. Please try again.' ) ) );
 	// dispatch an unsubscribe
-	next( unsubscribeToNewCommentEmails( action.payload.blogId ) );
-	console.log( error );
+	next( unsubscribeToNewCommentEmail( action.payload.blogId ) );
 }
 
 function requestCommentEmailUnsubscription( { dispatch }, action, next ) {
 	dispatch( http( {
 		method: 'POST',
-		path: `/read/site/${ action.payload.blogId }/post_email_subscriptions/delete`,
+		path: `/read/site/${ action.payload.blogId }/comment_email_subscriptions/delete`,
 		apiVersion: '1.2',
+		body: {}, // have to have the empty body for now to make the middleware happy
 		onSuccess: action,
 		onFailure: action,
 	} ) );
@@ -56,13 +58,17 @@ function requestCommentEmailUnsubscription( { dispatch }, action, next ) {
 function receiveCommentEmailUnsubscription( store, action, next, response ) {
 	// validate that it worked
 	// if it did, just swallow this response, as we don't need to pass it along.
-	console.log( response );
+	const subscribed = !! ( response && response.subscribed );
+	if ( subscribed ) {
+		// shoot. something went wrong.
+		next( subscribeToNewCommentEmail( action.payload.blogId ) );
+		return;
+	}
 }
 
-function receiveCommentEmailUnsubscriptionError( { dispatch }, action, next, error ) {
+function receiveCommentEmailUnsubscriptionError( { dispatch }, action, next ) {
 	dispatch( errorNotice( translate( 'Sorry, we had a problem unsubscribing. Please try again.' ) ) );
-	next( subscribeToNewCommentEmails( action.payload.blogId ) );
-	console.log( error );
+	next( subscribeToNewCommentEmail( action.payload.blogId ) );
 }
 
 export default {
